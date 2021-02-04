@@ -30,14 +30,9 @@ def triangulate_position(image_plane_locations, camera_poses, camera_matrix):
     P= ret[0]
     return P
 
-def images_to_single_fruit_centroid(fruit_number, image_path, isSim):
+def images_to_single_fruit_centroid(fruit_number, image_path):
     import PIL
-    if isSim:
-        image = PIL.Image.open(image_path).resize((640,480), PIL.Image.NEAREST)
-    else:
-        image = PIL.Image.open(image_path).resize((320,240), PIL.Image.NEAREST)
-
-
+    image = PIL.Image.open(image_path).resize((640,480), PIL.Image.NEAREST)
     # fruit = (Image(image_path, grey=True)==fruit_number)*1.0
     fruit = Image(image)==fruit_number
     # import pdb; pdb.set_trace()
@@ -48,7 +43,7 @@ def images_to_single_fruit_centroid(fruit_number, image_path, isSim):
     # assert len(blobs) == 1, "Must have only 1 fruit of the given fruit type in this photo"
     return np.array(blobs[0].centroid).reshape(2,) # (2,)
 
-def get_triangulation_params(base_dir, isSim):
+def get_triangulation_params(base_dir):
     # Assume everything is in base_dir/workshop_output
     import os
     from pathlib import Path
@@ -71,7 +66,7 @@ def get_triangulation_params(base_dir, isSim):
         for fruit_num in img_vals:
             if fruit_num>0:
                 try:
-                    centroid = images_to_single_fruit_centroid(fruit_num, base_dir/file_path, isSim)
+                    centroid = images_to_single_fruit_centroid(fruit_num, base_dir/file_path)
                     pose = image_poses[file_path]
                     fruit_lst_centroids[fruit_num-1].append(centroid)
                     fruit_lst_pose[fruit_num-1].append(np.array(pose).reshape(3,))
@@ -86,9 +81,7 @@ def get_triangulation_params(base_dir, isSim):
     return completed_triangulations
 
 def run_triangulation(base_dir, camera_matrix):
-    if camera_matrix[0,2]>200:
-        isSim = True
-    completed_triangulations = get_triangulation_params(base_dir, isSim)
+    completed_triangulations = get_triangulation_params(base_dir)
     triangulations_dict = {}
     fruit_list = ['apple', 'banana', 'pear', 'lemon']
     for fruit_num in completed_triangulations.keys():
@@ -109,7 +102,8 @@ if __name__ == "__main__":
     fileK = "{}intrinsic.txt".format('./calibration/param/')
     camera_matrix = np.loadtxt(fileK, delimiter=',')
     run_triangulation('./', camera_matrix)
-    print("Triangulation results are saved in fruit.txt!")
+    print('Result saved in fruit.txt!')
+        
 
     # print(P)
 
