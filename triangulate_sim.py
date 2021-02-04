@@ -102,6 +102,7 @@ if __name__ == "__main__":
     fileK = "{}intrinsic.txt".format('./calibration/param/')
     camera_matrix = np.loadtxt(fileK, delimiter=',')
     run_triangulation('./', camera_matrix)
+    print('Result saved in fruit.txt!')
         
 
     # print(P)

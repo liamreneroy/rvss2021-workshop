@@ -3,49 +3,37 @@ import ast
 import numpy as np
 import json
 
-#
-
-def parse_groundtruth(fname: str) -> dict:
+def parse_groundtruth(fname : str) -> dict:
     with open(fname,'r') as f:
         gt_dict = ast.literal_eval(f.readline())
         
         aruco_dict = {}
         for key in gt_dict:
-            aruco_dict[key] = np.reshape([gt_dict[key]["x"], gt_dict[key]["y"]], (2,1))
+            if key.startswith("aruco"):
+                aruco_num = int(key.strip('aruco')[:-2])
+                aruco_dict[aruco_num] = np.reshape([gt_dict[key]["x"], gt_dict[key]["y"]], (2,1))
     return aruco_dict
 
-def parse_user_fruit(fname: str) -> dict:
+def parse_user_map(fname : str) -> dict:
     with open(fname, 'r') as f:
         usr_dict = ast.literal_eval(f.read())
-        fruit_dict = {}
-        for f in usr_dict:
-            fruit_dict[f] = np.reshape([usr_dict[f][0],usr_dict[f][1]], (2,1))
-    return fruit_dict
+        aruco_dict = {}
+        for (i, tag) in enumerate(usr_dict["taglist"]):
+            aruco_dict[tag] = np.reshape([usr_dict["map"][0][i],usr_dict["map"][1][i]], (2,1))
+    return aruco_dict
 
-def match_aruco_points(aruco0: dict, aruco1: dict):
-    missing_fruit = []
+def match_aruco_points(aruco0 : dict, aruco1 : dict):
     points0 = []
     points1 = []
     keys = []
-    for key in aruco1:
-        if not key in aruco0:
-            missing_fruit.append(key)
+    for key in aruco0:
+        if not key in aruco1:
             continue
-        if np.isnan(aruco0[key][0]) or np.isnan(aruco0[key][1]):
-            missing_fruit+=1
-            continue
+        
         points0.append(aruco0[key])
         points1.append(aruco1[key])
         keys.append(key)
-    return np.hstack(points0), np.hstack(points1), missing_fruit, keys
-
-def parse_user_fruit(fname : str) -> dict:
-    with open(fname, 'r') as f:
-        usr_dict = ast.literal_eval(f.read())
-        fruit_dict = {}
-        for f in usr_dict:
-            fruit_dict[f] = np.reshape([usr_dict[f][0],usr_dict[f][1]], (2,1))
-    return fruit_dict
+    return keys, np.hstack(points0), np.hstack(points1)
 
 def solve_umeyama2d(points1, points2):
     # Solve the optimal transform such that
@@ -63,7 +51,7 @@ def solve_umeyama2d(points1, points2):
     sig1sq = 1/num_points * np.sum((points1 - mu1)**2.0)
     sig2sq = 1/num_points * np.sum((points2 - mu2)**2.0)
     Sig12 = 1/num_points * (points2-mu2) @ (points1-mu1).T
-    # Sig12 = 1/num_points * (points2-mu2) @ (points1-mu1).T @ np.linalg.pinv((points1-mu1)@(points1-mu1).T)
+
     # Use the SVD for the rotation
     U, d, Vh = np.linalg.svd(Sig12)
     S = np.eye(2)
@@ -109,9 +97,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     gt_aruco = parse_groundtruth(args.groundtruth)
-    us_aruco = parse_user_fruit(args.estimate)
+    us_aruco = parse_user_map(args.estimate)
 
-    us_vec, gt_vec, missing, taglist = match_aruco_points(us_aruco, gt_aruco)
+    taglist, us_vec, gt_vec = match_aruco_points(us_aruco, gt_aruco)
 
 
     rmse = compute_rmse(us_vec, gt_vec)
@@ -125,18 +113,14 @@ if __name__ == '__main__':
     print("Translation Vector: ({}, {})".format(x[0,0], x[1,0]))
 
     rmse = compute_rmse(us_vec_aligned, gt_vec)
-    print("Successfully detect {} kinds of fruits, missing {}".format(4-len(missing), missing))
     print("The RMSE after alignment: {}".format(rmse))
-    
-    mark = (100-25*len(missing))*(1.05-rmse/2)
-    
 
     print()
-    print("Pred Fruit")
+    print("Pred Locations")
     print(taglist)
     print("Real Locations")
     print("np.array("+np.array2string(gt_vec, precision=4, separator=',')+')')
     print("Aligned Pred Locations")
     print("np.array("+np.array2string(us_vec_aligned, precision=4, separator=',')+')')
 
-    print("The final mark is {}".format(mark))
+
