@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_classes", metavar='', type=int, default=4)
 parser.add_argument("--lr", metavar='', type=float, default=1.0e-3)
-parser.add_argument("--epochs", metavar='', type=int, default=40)
+parser.add_argument("--epochs", metavar='', type=int, default=20)
 parser.add_argument("--batch_size", metavar='', type=int, default=64)
 parser.add_argument("--weight_decay", metavar='', type=float, default=1.0e-4)
 parser.add_argument("--scheduler_step", metavar='', type=int, default=5,
