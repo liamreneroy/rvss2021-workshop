@@ -15,3 +15,5 @@ src/data_collector/dataset
 /test
 /record
 /workshop_output
+/network/scripts/dataset/
+/network/scripts/weights/
