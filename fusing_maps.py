@@ -76,7 +76,7 @@ def solve_umeyama2d(points1, points2):
     sig2sq = 1/num_points * np.sum((points2 - mu2)**2.0)
     # sig_inv = np.linalg.inv(points1-mu1.T @ points1-mu1)
     # Sig12 = 1/num_points * (points2-mu2) @ (points1-mu1).T @ sig_inv
-    Sig12 = 1/num_points * (points2-mu2) @ (points1-mu1).T @ np.linalg.pinv((points1-mu1)@(points1-mu1).T)
+    Sig12 = 1/num_points * (points2-mu2) @ (points1-mu1).T
     # Use the SVD for the rotation
     U, d, Vh = np.linalg.svd(Sig12)
     S = np.eye(2)
